@@ -1,0 +1,26 @@
+@import "tailwindcss";
+
+
+
+:root {
+  --primary: #C88445;
+  --bg: #F8F3F0;
+  --secondary-bg: #E8D7CC;
+  --text: #5A3A28;
+  --accent: #D9A79A;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-poppins);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-cormorant);
+}
