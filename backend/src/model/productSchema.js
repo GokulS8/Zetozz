@@ -24,8 +24,11 @@ const variantSchema = mongoose.Schema({
     stock: {
         type: Number,
         required: true
+    },
+    isActive: {
+        type: Boolean,
+        default: true
     }
-
 });
 const productSchema = mongoose.Schema({
     _id: {
@@ -45,9 +48,9 @@ const productSchema = mongoose.Schema({
         required: true
     },
     variants: [variantSchema],
-    freeShipping: {
-        type: Boolean,
-        default: false
+    shippingFee: {
+        type: Number,
+        default: 0
     },
     isActive: {
         type: Boolean,
