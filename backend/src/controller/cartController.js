@@ -1,6 +1,6 @@
-const cartDB=require('../model/cartModel');
-const {User}=require('../model/userSchema');
-const productDB=require('../model/productSchema');
+const cartDB = require('../model/cartModel');
+const { User } = require('../model/userSchema');
+const productDB = require('../model/productSchema');
 
 
 
@@ -157,3 +157,122 @@ const removecart = async (req, res) => {
     }
 };
 
+const viewCart = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        if (!userId) {
+            return res.status(400).json({
+                success: false,
+                message: "User ID is required"
+            });
+        }
+
+
+        const cart = await cartDB.aggregate([
+            {
+                $match: {
+                    user_id: userId
+                }
+            },
+            // Unwind items array
+            {
+                $unwind: "$items"
+            },
+            // Product Details
+            {
+                $lookup: {
+                    from: "products", // collection name in MongoDB
+                    localField: "items.product_id",
+                    foreignField: "_id",
+                    as: "productDetails"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$productDetails",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            // Variant Details
+            {
+                $lookup: {
+                    from: "variants", // collection name
+                    localField: "items.variant_id",
+                    foreignField: "_id",
+                    as: "variantDetails"
+                }
+            },
+            {
+                $unwind: {
+                    path: "$variantDetails",
+                    preserveNullAndEmptyArrays: true
+                }
+            },
+            // Final Structure
+            {
+                $project: {
+                    _id: 1,
+                    user_id: 1,
+
+                    quantity: "$items.quantity",
+
+                    product: {
+                        _id: "$productDetails._id",
+                        name: "$productDetails.name",
+                        price: "$productDetails.price",
+                        images: "$productDetails.images"
+                    },
+
+                    variant: {
+                        _id: "$variantDetails._id",
+                        size: "$variantDetails.size",
+                        color: "$variantDetails.color",
+                        stock: "$variantDetails.stock"
+                    }
+                }
+            },
+            // Convert back into items array
+            {
+                $group: {
+                    _id: "$_id",
+                    user_id: { $first: "$user_id" },
+
+                    items: {
+                        $push: {
+                            quantity: "$quantity",
+                            product: "$product",
+                            variant: "$variant"
+                        }
+                    }
+                }
+            }
+        ]);
+
+
+        if (!cart) {
+            return res.status(404).json({
+                success: false,
+                message: "Cart not found"
+            });
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: "Cart retrieved successfully",
+            cart
+        });
+    } catch (error) {
+        console.log("View Cart Error:", error);
+        return res.status(500).json({
+            success: false,
+            message: "Internal Server Error",
+            error: error.message
+        });
+    }
+};
+
+module.exports = {
+    addToCart,
+    removecart,
+    viewCart
+};
