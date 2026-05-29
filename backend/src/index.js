@@ -7,6 +7,9 @@ const cartRoutes = require('./routes/cartRoutes');
 const orderRoutes = require('./routes/orderRoutes');
 const productRoutes = require('./routes/productRoutes');
 const categoryRoutes = require('./routes/categoryRoutes');
+const dotenv = require('dotenv');
+
+dotenv.config();
 
 // Create an Express application
 const app = express();
