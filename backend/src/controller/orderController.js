@@ -1,7 +1,7 @@
 const cartDB = require("../model/cartSchema");
 const orderDB = require("../model/orderSchema");
 const productDB = require("../model/productSchema");
-const User = require("../model/userSchema");
+const { User } = require("../model/userSchema");
 
 
 
@@ -33,8 +33,8 @@ const checkout = async (req, res) => {
         // Address Check
         if (
             addressIndex === undefined ||
-            !user.addresses ||
-            !user.addresses[addressIndex]
+            !user.address ||
+            !user.address[addressIndex]
         ) {
             return res.status(400).json({
                 success: false,
@@ -43,7 +43,7 @@ const checkout = async (req, res) => {
         }
 
         const selectedAddress =
-            user.addresses[addressIndex];
+            user.address[addressIndex];
 
         // Cart Check
         const cart = await cartDB.findOne({

@@ -27,7 +27,7 @@ const createProduct = async (req, res) => {
             !category ||
             !quantity ||
             !price ||
-            !stock
+            stock === undefined
         ) {
             return res.status(400).json({
                 success: false,
@@ -95,11 +95,18 @@ const createProduct = async (req, res) => {
 const addVariant = async (req, res) => {
     try {
 
-        const { id } = req.params;
+        const { productId } = req.params;
 
         const { quantity, price, stock } = req.body;
 
-        const product = await productDB.findById(id);
+        if (!quantity || !price || stock === undefined) {
+            return res.status(400).json({
+                success: false,
+                message: "All fields are required"
+            });
+        }
+
+        const product = await productDB.findById(productId);
 
         if (!product) {
             return res.status(404).json({
@@ -160,7 +167,7 @@ const addVariant = async (req, res) => {
 const updateProduct = async (req, res) => {
     try {
 
-        const { id } = req.params;
+        const { productId } = req.params;
 
         const {
             name,
@@ -169,7 +176,7 @@ const updateProduct = async (req, res) => {
             shippingFee
         } = req.body;
 
-        const product = await productDB.findById(id);
+        const product = await productDB.findById(productId);
 
         if (!product) {
             return res.status(404).json({
@@ -302,9 +309,9 @@ const updateVariant = async (req, res) => {
 const deleteProduct = async (req, res) => {
     try {
 
-        const { id } = req.params;
+        const { productId } = req.params;
 
-        const product = await productDB.findById(id);
+        const product = await productDB.findById(productId);
 
         if (!product) {
             return res.status(404).json({
@@ -479,14 +486,14 @@ const getProducts = async (req, res) => {
 const getSingleProduct = async (req, res) => {
     try {
 
-        const { id } = req.params;
+        const { productId } = req.params;
 
         const product =
             await productDB.aggregate([
 
                 {
                     $match: {
-                        _id: id,
+                        _id: productId,
                         isActive: true
                     }
                 },

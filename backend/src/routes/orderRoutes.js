@@ -7,14 +7,14 @@ const {
     updateOrderStatus,
     cancelOrder,
     getAllOrders
-} = require('../controllers/orderController');
+} = require('../controller/orderController');
 
 
 router.post('/checkout', checkout);
+router.get('/all', getAllOrders);
 router.get('/user/:userId', getUserOrders);
 router.get('/:orderId', getSingleOrder);
 router.put('/:orderId/status', updateOrderStatus);
 router.delete('/:orderId/cancel', cancelOrder);
-router.get('/all', getAllOrders);
 
 module.exports = router;

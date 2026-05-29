@@ -1,4 +1,4 @@
-const cartDB = require('../model/cartModel');
+const cartDB = require('../model/cartSchema');
 const { User } = require('../model/userSchema');
 const productDB = require('../model/productSchema');
 
@@ -8,12 +8,13 @@ const addToCart = async (req, res) => {
     try {
 
         const { userId, productId, variantId, quantity } = req.body;
+        const requestedQuantity = Number(quantity);
 
         // Validation
-        if (!userId || !productId || !variantId || !quantity) {
+        if (!userId || !productId || !variantId || !requestedQuantity || requestedQuantity < 1) {
             return res.status(400).json({
                 success: false,
-                message: "All fields are required"
+                message: "All fields are required and quantity must be greater than 0"
             });
         }
 
@@ -52,15 +53,24 @@ const addToCart = async (req, res) => {
         const variant = product.variants[variantIndex];
 
         // Stock Check
-        if (variant.stock < quantity) {
+        let cart = await cartDB.findOne({ user_id: userId });
+
+        const itemIndex = cart
+            ? cart.items.findIndex(
+                (item) =>
+                    item.product_id.toString() === productId &&
+                    item.variant_id.toString() === variantId
+            )
+            : -1;
+
+        const currentQuantity = itemIndex > -1 ? cart.items[itemIndex].quantity : 0;
+
+        if (variant.stock < currentQuantity + requestedQuantity) {
             return res.status(400).json({
                 success: false,
                 message: "Insufficient stock"
             });
         }
-
-        // Find Cart
-        let cart = await cartDB.findOne({ user_id: userId });
 
         // Create Cart
         if (!cart) {
@@ -70,17 +80,10 @@ const addToCart = async (req, res) => {
             });
         }
 
-        // Existing Item Check
-        const itemIndex = cart.items.findIndex(
-            (item) =>
-                item.product_id.toString() === productId &&
-                item.variant_id.toString() === variantId
-        );
-
         if (itemIndex > -1) {
 
             // Increase Quantity
-            cart.items[itemIndex].quantity += Number(quantity);
+            cart.items[itemIndex].quantity += requestedQuantity;
 
         } else {
 
@@ -88,8 +91,8 @@ const addToCart = async (req, res) => {
             cart.items.push({
                 product_id: productId,
                 variant_id: variantId,
-                quantity: Number(quantity),
-                price: variant.price || product.price
+                quantity: requestedQuantity,
+                price: variant.price
             });
         }
         // Save Cart
@@ -168,87 +171,7 @@ const viewCart = async (req, res) => {
         }
 
 
-        const cart = await cartDB.aggregate([
-            {
-                $match: {
-                    user_id: userId
-                }
-            },
-            // Unwind items array
-            {
-                $unwind: "$items"
-            },
-            // Product Details
-            {
-                $lookup: {
-                    from: "products", // collection name in MongoDB
-                    localField: "items.product_id",
-                    foreignField: "_id",
-                    as: "productDetails"
-                }
-            },
-            {
-                $unwind: {
-                    path: "$productDetails",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            // Variant Details
-            {
-                $lookup: {
-                    from: "variants", // collection name
-                    localField: "items.variant_id",
-                    foreignField: "_id",
-                    as: "variantDetails"
-                }
-            },
-            {
-                $unwind: {
-                    path: "$variantDetails",
-                    preserveNullAndEmptyArrays: true
-                }
-            },
-            // Final Structure
-            {
-                $project: {
-                    _id: 1,
-                    user_id: 1,
-
-                    quantity: "$items.quantity",
-
-                    product: {
-                        _id: "$productDetails._id",
-                        name: "$productDetails.name",
-                        price: "$productDetails.price",
-                        images: "$productDetails.images"
-                    },
-
-                    variant: {
-                        _id: "$variantDetails._id",
-                        size: "$variantDetails.size",
-                        color: "$variantDetails.color",
-                        stock: "$variantDetails.stock"
-                    }
-                }
-            },
-            // Convert back into items array
-            {
-                $group: {
-                    _id: "$_id",
-                    user_id: { $first: "$user_id" },
-
-                    items: {
-                        $push: {
-                            quantity: "$quantity",
-                            product: "$product",
-                            variant: "$variant"
-                        }
-                    }
-                }
-            }
-        ]);
-
-
+        const cart = await cartDB.findOne({ user_id: userId }).lean();
         if (!cart) {
             return res.status(404).json({
                 success: false,
@@ -256,10 +179,48 @@ const viewCart = async (req, res) => {
             });
         }
 
+        const productIds = cart.items.map((item) => item.product_id);
+        const products = await productDB.find({ _id: { $in: productIds } }).lean();
+        const productMap = new Map(products.map((product) => [product._id.toString(), product]));
+
+        const items = cart.items.map((item) => {
+            const product = productMap.get(item.product_id.toString());
+            const variant = product?.variants?.find(
+                (variantItem) => variantItem._id.toString() === item.variant_id.toString()
+            );
+
+            return {
+                quantity: item.quantity,
+                price: item.price,
+                product: product
+                    ? {
+                        _id: product._id,
+                        name: product.name,
+                        description: product.description,
+                        category: product.category,
+                        shippingFee: product.shippingFee
+                    }
+                    : null,
+                variant: variant
+                    ? {
+                        _id: variant._id,
+                        quantity: variant.quantity,
+                        price: variant.price,
+                        images: variant.images,
+                        stock: variant.stock,
+                        isActive: variant.isActive
+                    }
+                    : null
+            };
+        });
+
         return res.status(200).json({
             success: true,
             message: "Cart retrieved successfully",
-            cart
+            cart: {
+                ...cart,
+                items
+            }
         });
     } catch (error) {
         console.log("View Cart Error:", error);

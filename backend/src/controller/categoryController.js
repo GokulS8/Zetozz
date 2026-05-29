@@ -14,9 +14,13 @@ const createCategory = async (req, res) => {
                 folder: "Zetozz/Categories"
             }
         );
-        const imageUrl = result.secure_url;
         const { name, description } = req.body;
-        const category = await categoryDB.create({ name, description, imageUrl });
+        const category = await categoryDB.create({
+            name,
+            description,
+            imageUrl: result.secure_url,
+            cloudinaryId: result.public_id
+        });
         res.status(201).json({ message: "Category created successfully", category });
     } catch (error) {
         console.error("Error creating category:", error);
@@ -27,7 +31,7 @@ const createCategory = async (req, res) => {
 
 const getCategories = async (req, res) => {
     try {
-        const categories = await categoryDB.find();
+        const categories = await categoryDB.find({ isActive: true });
         res.status(200).json({ message: "Categories retrieved successfully", categories });
     } catch (error) {
         console.error("Error retrieving categories:", error);
@@ -53,8 +57,11 @@ const updateCategory = async (req, res) => {
                     folder: "Zetozz/Categories"
                 }
             );
-            await cloudinary.uploader.destroy(category.cloudinaryId);
+            if (category.cloudinaryId) {
+                await cloudinary.uploader.destroy(category.cloudinaryId);
+            }
             category.imageUrl = result.secure_url;
+            category.cloudinaryId = result.public_id;
         }
         await category.save();
         res.status(200).json({ message: "Category updated successfully", category });
@@ -67,7 +74,7 @@ const updateCategory = async (req, res) => {
 const deleteCategory = async (req, res) => {
     try {
         const { id } = req.params;  
-        const category = await categoryDB.findByIdAndDelete(id);
+        const category = await categoryDB.findById(id);
         if (!category) {
             return res.status(404).json({ message: "Category not found" });
         }

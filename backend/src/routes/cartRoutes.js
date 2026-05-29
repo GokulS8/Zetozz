@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const {
     addToCart,removecart,viewCart
-} = require('../controllers/cartController');
+} = require('../controller/cartController');
 
 router.post('/add', addToCart);
 router.delete('/remove', removecart);

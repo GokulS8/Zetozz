@@ -85,10 +85,15 @@ const login = async (req, res) => {
 const updateProfile = async (req, res) => {
     try {
         const { address, ...data } = req.body
-        const updatedData = User.findByIdAndUpdate(req.user._id, data, { new: true })
+        const updatedData = await User.findByIdAndUpdate(req.user._id, data, { new: true })
+        if (!updatedData) {
+            return res.status(404).json({
+                message: "User not found"
+            })
+        }
         if (address) {
             updatedData.address.push(address)
-            updatedData.save()
+            await updatedData.save()
         }
 
         res.status(200).json({

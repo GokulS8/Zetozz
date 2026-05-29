@@ -19,6 +19,9 @@ const categorySchema = mongoose.Schema({
         type: String,
         required: true
     },
+    cloudinaryId: {
+        type: String
+    },
     isActive: { 
         type: Boolean,
         default: true

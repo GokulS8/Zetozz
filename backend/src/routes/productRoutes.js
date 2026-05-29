@@ -9,14 +9,15 @@ const {
     deleteVariant,
     getProducts,
     getSingleProduct
-} = require('../controllers/productController');
+} = require('../controller/productController');
+const upload = require('../middleware/multer');
 
-router.post('/create', createProduct);
-router.post('/:productId/variant', addVariant);
+router.post('/create', upload.single('image'), createProduct);
+router.get('/all', getProducts);
+router.post('/:productId/variant', upload.single('image'), addVariant);
 router.put('/:productId', updateProduct);
-router.put('/:productId/variant/:variantId', updateVariant);    
+router.put('/:productId/variant/:variantId', upload.single('image'), updateVariant);
 router.delete('/:productId', deleteProduct);
 router.delete('/:productId/variant/:variantId', deleteVariant);
-router.get('/all', getProducts);
 router.get('/:productId', getSingleProduct);
 module.exports = router;
