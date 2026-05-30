@@ -26,9 +26,11 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${poppins.variable} ${cormorant.variable}`}>
-        <Navbar />
-        {children}
+<body className={`${poppins.variable} ${cormorant.variable} w-full md:w-[90%] mx-auto`}>
+          <Navbar />
+        <main className="min-h-screen">
+          {children}
+        </main>
         </body>
     </html>
   );

@@ -1,6 +1,15 @@
 @import "tailwindcss";
 
+@font-face {
+    font-family: 'alex-brush';
+    src: url('/fonts/AlexBrush-Regular.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+}
 
+.font-alex {
+    font-family: 'alex-brush';
+}
 
 :root {
   --primary: #C88445;
@@ -23,4 +32,13 @@ h4,
 h5,
 h6 {
   font-family: var(--font-cormorant);
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+    display: none;
+}
+
+.scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
 }

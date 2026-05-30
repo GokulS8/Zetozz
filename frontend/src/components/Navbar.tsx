@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react'
 import { Heart, ShoppingCart, Menu, X } from "lucide-react"
-
+import Link from 'next/link'
 export default function Navbar() {
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isScrolled, setIsScrolled] = useState(false)
@@ -13,12 +13,18 @@ export default function Navbar() {
             setIsScrolled(window.scrollY > 20)
         }
 
-        window.addEventListener('scroll', handleScroll)
+        // Run once initially
+        handleScroll()
 
-        return () => window.removeEventListener('scroll', handleScroll)
+        window.addEventListener("scroll", handleScroll)
+
+        return () => {
+            window.removeEventListener("scroll", handleScroll)
+        }
     }, [])
 
-    // Close menu on resize
+
+    // Close mobile menu on desktop resize
     useEffect(() => {
         const handleResize = () => {
             if (window.innerWidth >= 1024) {
@@ -26,10 +32,26 @@ export default function Navbar() {
             }
         }
 
-        window.addEventListener('resize', handleResize)
+        window.addEventListener("resize", handleResize)
 
-        return () => window.removeEventListener('resize', handleResize)
+        return () => {
+            window.removeEventListener("resize", handleResize)
+        }
     }, [])
+
+
+    // Prevent background scroll when mobile menu opens
+    useEffect(() => {
+        if (isMobileMenuOpen) {
+            document.body.style.overflow = "hidden"
+        } else {
+            document.body.style.overflow = "auto"
+        }
+
+        return () => {
+            document.body.style.overflow = "auto"
+        }
+    }, [isMobileMenuOpen])
 
     return (
         <>
@@ -38,6 +60,7 @@ export default function Navbar() {
                 className={`
                 fixed top-0 left-0 w-full z-50
                 h-20
+                will-change-transform
                 flex items-center justify-between
                 px-5 sm:px-8 lg:px-14
                 bg-[var(--bg)]/90 backdrop-blur-md
@@ -63,21 +86,21 @@ export default function Navbar() {
                     <div className="hidden lg:flex items-center gap-8 xl:gap-10">
 
                         <a
-                            href="#"
+                            href="/"
                             className="relative text-[var(--text)] font-medium hover:text-[var(--primary)] transition duration-300 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--primary)] after:transition-all after:duration-300 hover:after:w-full"
                         >
                             Home
                         </a>
 
                         <a
-                            href="#"
+                            href="/products"
                             className="relative text-[var(--text)] font-medium hover:text-[var(--primary)] transition duration-300 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--primary)] after:transition-all after:duration-300 hover:after:w-full"
                         >
                             Products
                         </a>
 
                         <a
-                            href="#"
+                            href="/contact"
                             className="relative text-[var(--text)] font-medium hover:text-[var(--primary)] transition duration-300 after:absolute after:left-0 after:-bottom-1 after:h-[2px] after:w-0 after:bg-[var(--primary)] after:transition-all after:duration-300 hover:after:w-full"
                         >
                             Contact
@@ -97,14 +120,7 @@ export default function Navbar() {
                 <div className="flex items-center gap-3 sm:gap-5">
 
                     {/* Desktop Icons */}
-                    <div className="hidden md:flex items-center gap-2">
-
-                        <button className="p-2 rounded-full hover:bg-[var(--secondary-bg)] transition duration-300 group">
-                            <Heart
-                                size={20}
-                                className="text-[var(--text)] group-hover:text-[var(--primary)] transition duration-300"
-                            />
-                        </button>
+                    <div className="sm:flex items-center gap-2">
 
                         <button className="p-2 rounded-full hover:bg-[var(--secondary-bg)] transition duration-300 group">
                             <ShoppingCart
@@ -116,18 +132,18 @@ export default function Navbar() {
                     </div>
 
                     {/* Divider */}
-                    <div className="hidden md:block h-7 w-px bg-[var(--secondary-bg)]"></div>
+                    <div className="hidden lg:block h-7 w-px bg-[var(--secondary-bg)]"></div>
 
                     {/* Desktop Buttons */}
-                    <div className="hidden sm:flex items-center gap-3">
+                    <div className="hidden lg:flex items-center gap-3">
 
-                        <button className="px-5 py-2 rounded-full border border-[var(--primary)] text-[var(--primary)] font-medium hover:bg-[var(--primary)] hover:text-white transition duration-300">
+                        <Link href="/login" className="px-5 py-2 rounded-full border border-[var(--primary)] text-[var(--primary)] font-medium hover:bg-[var(--primary)] hover:text-white transition duration-300">
                             Login
-                        </button>
+                        </Link>
 
-                        <button className="px-5 py-2 rounded-full bg-[var(--primary)] text-white font-medium hover:bg-[#b87439] transition duration-300 shadow-sm">
+                        <Link href="/signup" className="px-5 py-2 rounded-full bg-[var(--primary)] text-white font-medium hover:bg-[#b87439] transition duration-300 shadow-sm">
                             Sign Up
-                        </button>
+                        </Link>
 
                     </div>
 
@@ -156,7 +172,7 @@ export default function Navbar() {
                 overflow-hidden
                 transition-all duration-300 ease-in-out
                 ${isMobileMenuOpen
-                        ? 'max-h-[500px] opacity-100'
+                        ? 'max-h-screen opacity-100'
                         : 'max-h-0 opacity-0'
                     }
                 `}
@@ -168,7 +184,7 @@ export default function Navbar() {
                     <div className="flex flex-col gap-5">
 
                         <a
-                            href="#"
+                            href="/"
                             className="text-[var(--text)] hover:text-[var(--primary)] transition"
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
@@ -176,7 +192,7 @@ export default function Navbar() {
                         </a>
 
                         <a
-                            href="#"
+                            href="/products"
                             className="text-[var(--text)] hover:text-[var(--primary)] transition"
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
@@ -184,7 +200,7 @@ export default function Navbar() {
                         </a>
 
                         <a
-                            href="#"
+                            href="/contact"
                             className="text-[var(--text)] hover:text-[var(--primary)] transition"
                             onClick={() => setIsMobileMenuOpen(false)}
                         >
@@ -199,22 +215,6 @@ export default function Navbar() {
                             Your Best Friend
                         </p>
                     </div>
-
-                    {/* Mobile Icons */}
-                    <div className="flex items-center justify-center gap-10 pt-2">
-
-                        <button className="flex flex-col items-center gap-1 text-[var(--text)] hover:text-[var(--primary)] transition">
-                            <Heart size={22} />
-                            <span className="text-xs">Wishlist</span>
-                        </button>
-
-                        <button className="flex flex-col items-center gap-1 text-[var(--text)] hover:text-[var(--primary)] transition">
-                            <ShoppingCart size={22} />
-                            <span className="text-xs">Cart</span>
-                        </button>
-
-                    </div>
-
                     {/* Mobile Buttons */}
                     <div className="flex flex-col gap-3 pt-4">
 

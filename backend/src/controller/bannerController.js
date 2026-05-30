@@ -33,8 +33,13 @@ const createBanner = async (req, res) => {
 
 const getBanners = async (req, res) => {
     try {
-        const banners = await BannerDB.find()
-        res.status(200).json({ message: "Banners retrieved successfully", banners })
+        const banners = await BannerDB.aggregate([
+            {
+                $sort: {
+                    updatedAt: -1
+                }
+            }
+        ]); res.status(200).json({ message: "Banners retrieved successfully", banners })
     } catch (error) {
         res.status(500).json({ message: "Failed to retrieve banners", error: error.message })
     }
